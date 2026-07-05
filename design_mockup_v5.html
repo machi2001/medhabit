@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MedHabit Buddy — 보호자용 대시보드</title>
+    <style>
+      :root {
+        --paper: #faf7f0;
+        --surface: #ffffff;
+        --ink: #16302a;
+        --ink-soft: #4c6259;
+        --line: rgba(22, 48, 42, 0.09);
+        --pine: #1e453b;
+        --pine-tint: #eaf1ee;
+        --amber: #e0a63c;
+        --amber-tint: #fbf1de;
+        --ok: #2f7e5c;
+        --warn: #c07a2e;
+        --danger: #bd4a3f;
+        --screen: #cfe0c6;
+        --screen-line: #9fb591;
+        --radius-lg: 20px;
+        --radius-md: 14px;
+        --shadow: 0 2px 8px rgba(22, 48, 42, 0.05), 0 10px 24px rgba(22, 48, 42, 0.04);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Pretendard", "Noto Sans KR", -apple-system, sans-serif;
+        color: var(--ink);
+        background: var(--paper);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .shell {
+        width: min(1040px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 40px 0 64px;
+      }
+
+      /* ---------- Top bar ---------- */
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .mark { width: 38px; height: 38px; flex-shrink: 0; }
+      .brand-text .name { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+      .brand-text .role { font-size: 12.5px; color: var(--ink-soft); margin-top: 1px; }
+      .today { font-size: 13px; color: var(--ink-soft); font-weight: 600; white-space: nowrap; }
+
+      /* ---------- Top nav (compact, next to brand) ---------- */
+      .topnav {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: 8px;
+      }
+
+      .nav-item {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--ink-soft);
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .nav-item:hover { background: var(--pine-tint); color: var(--pine); }
+
+      /* ---------- Hero status ---------- */
+      .hero {
+        background: var(--pine);
+        color: #fbf8f1;
+        border-radius: var(--radius-lg);
+        padding: 32px 32px 28px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 24px;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .hero-label { font-size: 13px; font-weight: 700; color: rgba(251, 248, 241, 0.7); margin-bottom: 10px; }
+      .hero-headline { font-size: clamp(22px, 3vw, 28px); font-weight: 800; letter-spacing: -0.01em; line-height: 1.35; margin-bottom: 14px; }
+      .hero-headline b { color: var(--amber); font-weight: 800; }
+      .hero-sub { font-size: 14px; color: rgba(251, 248, 241, 0.72); }
+      .hero-time { text-align: right; }
+      .hero-time .num { font-size: clamp(34px, 5vw, 46px); font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+      .hero-time .lbl { font-size: 12.5px; color: rgba(251, 248, 241, 0.68); margin-top: 6px; }
+
+      /* ---------- Generic section card ---------- */
+      .section {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+        padding: 24px;
+        margin-bottom: 16px;
+      }
+
+      .section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
+      .section-head h2 { font-size: 15px; font-weight: 800; margin: 0; }
+      .section-head .link { font-size: 12.5px; font-weight: 700; color: var(--ink-soft); }
+
+      /* ---------- Schedule / log rows ---------- */
+      .row {
+        display: grid;
+        grid-template-columns: 56px 1fr auto;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 4px;
+        border-top: 1px solid var(--line);
+      }
+
+      .row:first-child { border-top: none; }
+      .row .time { font-size: 17px; font-weight: 800; color: var(--ink); }
+      .row .desc strong { display: block; font-size: 14.5px; font-weight: 700; }
+      .row .desc span { display: block; font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; }
+
+      .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+      .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; }
+      .status.done { color: var(--ok); }
+      .status.done::before { background: var(--ok); }
+      .status.pending { color: var(--ink-soft); }
+      .status.pending::before { background: var(--ink-soft); opacity: 0.5; }
+      .status.missed { color: var(--danger); }
+      .status.missed::before { background: var(--danger); }
+
+      /* ---------- Two column layout ---------- */
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        align-items: start;
+      }
+
+      /* ---------- Alerts ---------- */
+      .alert { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 14px 4px; border-top: 1px solid var(--line); }
+      .alert:first-child { border-top: none; }
+      .alert strong { display: block; font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+      .alert p { margin: 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+
+      /* ---------- Tamagotchi companion ---------- */
+      .device {
+        background: linear-gradient(180deg, #f6ddaa, #e9bf72);
+        border: 1px solid rgba(224, 166, 60, 0.4);
+      }
+
+      .device .section-head h2 { color: var(--warn); }
+
+      .screen-wrap {
+        background: #274d3f;
+        border-radius: var(--radius-md);
+        padding: 10px;
+      }
+
+      .screen {
+        background: var(--screen);
+        border-radius: 8px;
+        border: 2px solid var(--screen-line);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 0;
+      }
+
+      .pet { width: 88px; height: 78px; shape-rendering: crispEdges; image-rendering: pixelated; }
+
+      .device-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 12px;
+      }
+
+      .device-meta .lv { font-size: 13px; font-weight: 800; color: var(--pine); }
+      .device-meta .msg { font-size: 12px; color: #6b4f1f; }
+
+      .growth-bar {
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .growth-bar .seg {
+        flex: 1;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(30, 69, 59, 0.15);
+      }
+
+      .growth-bar .seg.filled { background: var(--pine); }
+
+      .growth-bar .gift {
+        flex-shrink: 0;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--amber);
+        border: 2px solid #fbf8f1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      }
+
+      .reward-banner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px dashed rgba(107, 79, 31, 0.35);
+      }
+
+      .reward-banner .icon { font-size: 18px; line-height: 1; flex-shrink: 0; }
+      .reward-banner strong { display: block; font-size: 12.5px; font-weight: 800; color: #6b4f1f; }
+      .reward-banner span { display: block; font-size: 11.5px; color: #8a6a30; margin-top: 1px; }
+
+      .buttons { display: flex; justify-content: center; gap: 14px; margin-top: 14px; }
+      .buttons span { width: 10px; height: 10px; border-radius: 50%; background: rgba(30, 69, 59, 0.35); }
+
+      /* ---------- Footnote card ---------- */
+      .note { background: var(--pine-tint); border: 1px solid rgba(30, 69, 59, 0.12); }
+      .note p { margin: 0; font-size: 13px; color: var(--ink-soft); line-height: 1.6; }
+
+      @media (max-width: 780px) {
+        .grid { grid-template-columns: 1fr; }
+        .hero { grid-template-columns: 1fr; text-align: left; }
+        .hero-time { text-align: left; }
+        .topbar { flex-wrap: wrap; row-gap: 10px; }
+        .brand { flex-wrap: wrap; row-gap: 8px; }
+        .topnav { margin-left: 0; width: 100%; }
+      }
+
+      @media (max-width: 520px) {
+        .shell { width: calc(100% - 24px); padding: 24px 0 40px; }
+        .hero { padding: 24px; }
+        .section { padding: 18px; }
+        .row { grid-template-columns: 44px 1fr; row-gap: 6px; }
+        .row .status { grid-column: 2; }
+        .nav-item { padding: 7px 10px; font-size: 12.5px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <!-- Top bar -->
+      <header class="topbar">
+        <div class="brand">
+          <svg class="mark" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="1" y="1" width="38" height="38" rx="12" fill="#1E453B"/>
+            <circle cx="16" cy="18" r="3" fill="#FBF8F1"/>
+            <circle cx="24" cy="18" r="3" fill="#FBF8F1"/>
+            <path d="M14 25c1.6 2 3.6 3 6 3s4.4-1 6-3" stroke="#E0A63C" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+          </svg>
+          <div class="brand-text">
+            <div class="name">MedHabit Buddy</div>
+            <div class="role">보호자용 대시보드</div>
+          </div>
+          <nav class="topnav" aria-label="빠른 작업">
+            <a class="nav-item" href="#">일정 수정</a>
+            <a class="nav-item" href="#">보호자 설정</a>
+            <a class="nav-item" href="#">기기 상태</a>
+          </nav>
+        </div>
+        <div class="today">2026. 07. 03 (금)</div>
+      </header>
+
+      <!-- Hero -->
+      <section class="hero">
+        <div>
+          <div class="hero-label">오늘의 복약 상태</div>
+          <div class="hero-headline">아침 복용 <b>완료</b>, 저녁 복용은 <b>1시간 24분</b> 뒤예요.</div>
+          <div class="hero-sub">약통은 어르신이, 일정과 이상 징후 확인은 이 화면에서.</div>
+        </div>
+        <div class="hero-time">
+          <div class="num">20:00</div>
+          <div class="lbl">저녁 약 예정 시각</div>
+        </div>
+      </section>
+
+      <div class="grid">
+        <!-- Left column -->
+        <div>
+          <section class="section">
+            <div class="section-head"><h2>오늘의 일정</h2></div>
+            <div class="row">
+              <div class="time">08:00</div>
+              <div class="desc"><strong>아침 약</strong><span>혈압약 1정 · 당뇨약 1정</span></div>
+              <span class="status done">복용 완료</span>
+            </div>
+            <div class="row">
+              <div class="time">20:00</div>
+              <div class="desc"><strong>저녁 약</strong><span>혈압약 1정 · 영양제 1정</span></div>
+              <span class="status pending">복용 예정</span>
+            </div>
+          </section>
+
+          <section class="section">
+            <div class="section-head">
+              <h2>약통 이벤트 로그</h2>
+              <span class="link">전체 보기</span>
+            </div>
+            <div class="row">
+              <div class="time">07:57</div>
+              <div class="desc"><strong>약통 열림 감지</strong><span>아침 일정과 일치</span></div>
+              <span class="status done">정상</span>
+            </div>
+            <div class="row">
+              <div class="time">07:58</div>
+              <div class="desc"><strong>복용 확인 처리</strong><span>대시보드에 즉시 반영</span></div>
+              <span class="status done">완료</span>
+            </div>
+          </section>
+        </div>
+
+        <!-- Right column -->
+        <div>
+          <section class="section device">
+            <div class="section-head"><h2>알약이</h2><span class="link" style="color:#6b4f1f;">LV.3</span></div>
+            <div class="screen-wrap">
+              <div class="screen">
+                <svg class="pet" viewBox="0 0 72 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <!-- row0 -->
+                  <rect x="16" y="0" width="8" height="8" fill="#1E453B"/>
+                  <rect x="24" y="0" width="8" height="8" fill="#1E453B"/>
+                  <rect x="32" y="0" width="8" height="8" fill="#1E453B"/>
+                  <rect x="40" y="0" width="8" height="8" fill="#1E453B"/>
+                  <rect x="48" y="0" width="8" height="8" fill="#1E453B"/>
+                  <!-- row1 -->
+                  <rect x="8"  y="8" width="8" height="8" fill="#1E453B"/>
+                  <rect x="16" y="8" width="8" height="8" fill="#1E453B"/>
+                  <rect x="24" y="8" width="8" height="8" fill="#1E453B"/>
+                  <rect x="32" y="8" width="8" height="8" fill="#1E453B"/>
+                  <rect x="40" y="8" width="8" height="8" fill="#1E453B"/>
+                  <rect x="48" y="8" width="8" height="8" fill="#1E453B"/>
+                  <rect x="56" y="8" width="8" height="8" fill="#1E453B"/>
+                  <!-- row2 -->
+                  <rect x="0"  y="16" width="8" height="8" fill="#1E453B"/>
+                  <rect x="8"  y="16" width="8" height="8" fill="#1E453B"/>
+                  <rect x="16" y="16" width="8" height="8" fill="#1E453B"/>
+                  <rect x="24" y="16" width="8" height="8" fill="#1E453B"/>
+                  <rect x="32" y="16" width="8" height="8" fill="#1E453B"/>
+                  <rect x="40" y="16" width="8" height="8" fill="#1E453B"/>
+                  <rect x="48" y="16" width="8" height="8" fill="#1E453B"/>
+                  <rect x="56" y="16" width="8" height="8" fill="#1E453B"/>
+                  <rect x="64" y="16" width="8" height="8" fill="#1E453B"/>
+                  <!-- row3 (eyes) -->
+                  <rect x="0"  y="24" width="8" height="8" fill="#1E453B"/>
+                  <rect x="8"  y="24" width="8" height="8" fill="#1E453B"/>
+                  <rect x="16" y="24" width="8" height="8" fill="#FAF7F0"/>
+                  <rect x="24" y="24" width="8" height="8" fill="#1E453B"/>
+                  <rect x="32" y="24" width="8" height="8" fill="#1E453B"/>
+                  <rect x="40" y="24" width="8" height="8" fill="#1E453B"/>
+                  <rect x="48" y="24" width="8" height="8" fill="#FAF7F0"/>
+                  <rect x="56" y="24" width="8" height="8" fill="#1E453B"/>
+                  <rect x="64" y="24" width="8" height="8" fill="#1E453B"/>
+                  <!-- row4 -->
+                  <rect x="0"  y="32" width="8" height="8" fill="#1E453B"/>
+                  <rect x="8"  y="32" width="8" height="8" fill="#1E453B"/>
+                  <rect x="16" y="32" width="8" height="8" fill="#1E453B"/>
+                  <rect x="24" y="32" width="8" height="8" fill="#1E453B"/>
+                  <rect x="32" y="32" width="8" height="8" fill="#1E453B"/>
+                  <rect x="40" y="32" width="8" height="8" fill="#1E453B"/>
+                  <rect x="48" y="32" width="8" height="8" fill="#1E453B"/>
+                  <rect x="56" y="32" width="8" height="8" fill="#1E453B"/>
+                  <rect x="64" y="32" width="8" height="8" fill="#1E453B"/>
+                  <!-- row5 (mouth) -->
+                  <rect x="0"  y="40" width="8" height="8" fill="#1E453B"/>
+                  <rect x="8"  y="40" width="8" height="8" fill="#1E453B"/>
+                  <rect x="16" y="40" width="8" height="8" fill="#1E453B"/>
+                  <rect x="24" y="40" width="8" height="8" fill="#FAF7F0"/>
+                  <rect x="32" y="40" width="8" height="8" fill="#FAF7F0"/>
+                  <rect x="40" y="40" width="8" height="8" fill="#FAF7F0"/>
+                  <rect x="48" y="40" width="8" height="8" fill="#1E453B"/>
+                  <rect x="56" y="40" width="8" height="8" fill="#1E453B"/>
+                  <rect x="64" y="40" width="8" height="8" fill="#1E453B"/>
+                  <!-- row6 -->
+                  <rect x="8"  y="48" width="8" height="8" fill="#1E453B"/>
+                  <rect x="16" y="48" width="8" height="8" fill="#1E453B"/>
+                  <rect x="24" y="48" width="8" height="8" fill="#1E453B"/>
+                  <rect x="32" y="48" width="8" height="8" fill="#1E453B"/>
+                  <rect x="40" y="48" width="8" height="8" fill="#1E453B"/>
+                  <rect x="48" y="48" width="8" height="8" fill="#1E453B"/>
+                  <rect x="56" y="48" width="8" height="8" fill="#1E453B"/>
+                  <!-- row7 -->
+                  <rect x="16" y="56" width="8" height="8" fill="#1E453B"/>
+                  <rect x="24" y="56" width="8" height="8" fill="#1E453B"/>
+                  <rect x="32" y="56" width="8" height="8" fill="#1E453B"/>
+                  <rect x="40" y="56" width="8" height="8" fill="#1E453B"/>
+                  <rect x="48" y="56" width="8" height="8" fill="#1E453B"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- LV.1 ~ LV.7 progress, gifticon unlocks at LV.7 -->
+            <div class="growth-bar" aria-label="레벨 진행도, LV.7에서 기프티콘 지급">
+              <div class="seg filled"></div>
+              <div class="seg filled"></div>
+              <div class="seg filled"></div>
+              <div class="seg"></div>
+              <div class="seg"></div>
+              <div class="seg"></div>
+              <div class="gift">🎁</div>
+            </div>
+            <div class="device-meta">
+              <span class="lv">LV.3 · 성장까지 2일</span>
+              <span class="msg">오늘도 규칙적으로 복용 중</span>
+            </div>
+
+            <div class="reward-banner">
+              <span class="icon">🎁</span>
+              <div>
+                <strong>LV.7 달성 시 기프티콘 증정</strong>
+                <span>지금보다 4단계 더 성장하면 받을 수 있어요</span>
+              </div>
+            </div>
+
+            <div class="buttons"><span></span><span></span><span></span></div>
+          </section>
+
+          <section class="section">
+            <div class="section-head"><h2>알림</h2></div>
+            <div class="alert">
+              <div>
+                <strong>미복용 알림 기준</strong>
+                <p>예정 시간에서 30분이 지나도 약통이 열리지 않으면 상태가 즉시 바뀌고 보호자에게 알려드립니다.</p>
+              </div>
+            </div>
+            <div class="alert">
+              <div>
+                <strong>기기 연결</strong>
+                <p>18:31 기준 정상 연결 상태입니다.</p>
+              </div>
+              <span class="status done" style="flex-shrink:0;">온라인</span>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Footnote, full width -->
+      <section class="section note">
+        <div class="section-head"><h2>로그인 화면 방향</h2></div>
+        <p>이메일 로그인과 기기 등록 코드 입력, 두 단계면 충분합니다. 회원 유형 분기, 여러 장의 온보딩, 소셜 로그인은 초기 버전에서 제외합니다.</p>
+      </section>
+    </main>
+  </body>
+</html>

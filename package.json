@@ -1,0 +1,20 @@
+{
+  "name": "medhabit-buddy",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "node src/domain.test.js",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "firebase": "latest",
+    "firebase-tools": "^15.22.4",
+    "react": "latest",
+    "react-dom": "latest",
+    "vite": "latest"
+  }
+}
